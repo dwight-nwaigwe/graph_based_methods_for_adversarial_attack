@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+# taken from https://github.com/atulshanbhag/Layerwise-Relevance-Propagation
 
 import numpy              as np
 import matplotlib.pyplot  as plt
