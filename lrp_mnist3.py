@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+#adapted from https://github.com/atulshanbhag/Layerwise-Relevance-Propagation
 import sys
 
 from tensorflow.keras                        import backend as K
