@@ -6,3 +6,6 @@ For each model, the source code is separated into subdirectories for logistic re
 Making the adversarial examples for Model 1 and running the corresponding logistic regression and statistical test source code is simple, but doing this for Inceptionresnetv2/Mobilenet/VGG19 requires a lot more RAM and time; you may need access to a high performance cluster. 
 
 Feel free to contact me with comments or requests for help.
+
+
+*note that the layerwise relevance propgation code is adapted from that found at https://github.com/atulshanbhag/Layerwise-Relevance-Propagation
