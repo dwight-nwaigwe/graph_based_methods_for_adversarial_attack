@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-#adapted from https://github.com/atulshanbhag/Layerwise-Relevance-Propagation
+#Adapted from https://github.com/atulshanbhag/Layerwise-Relevance-Propagation
+#Instead of only returning relevances for activations, the functions here also return relevances along weights between neurons.
 import sys
 
 from tensorflow.keras                        import backend as K
@@ -210,21 +211,21 @@ class LayerwiseRelevancePropagation:
     
 
   def backprop_max_pool2d(self, a, a2, r, ksize=(1, 2, 2, 1), strides=(1, 2, 2, 1)):
-    z = K.pool2d(a, pool_size=ksize[1:-1], strides=strides[1:-1], padding='valid', pool_mode='max')
+    z = K.pool2d(a, pool_size=ksize[1:-1], strides=strides[1:-1], padding='VALID', pool_mode='max')
 
     z_p = K.maximum(z, 0.) + self.epsilon
 
     s_p = r / z_p
-    c_p = gen_nn_ops.max_pool_grad_v2(a, z_p, s_p, ksize, strides, padding='VALID')
+    c_p = gen_nn_ops.max_pool_grad_v2(a, z_p, s_p, ksize, strides, padding=padding)
 
     z_n = K.minimum(z, 0.) - self.epsilon
     s_n = r / z_n
-    c_n = gen_nn_ops.max_pool_grad_v2(a, z_n, s_n, ksize, strides, padding='VALID')
+    c_n = gen_nn_ops.max_pool_grad_v2(a, z_n, s_n, ksize, strides, padding=padding)
     
     #dwight modified the formula
     z_tmp = K.minimum(z, 1000000.) + self.epsilon
     s = r / z_tmp
-    c = gen_nn_ops.max_pool_grad_v2(a, z_tmp, s, ksize, strides, padding='VALID')
+    c = gen_nn_ops.max_pool_grad_v2(a, z_tmp, s, ksize, strides, padding=padding)
     
     if self.lrp_formula== 1:
         return a *  c , tf.tensordot((a*c),s,axes=0)
@@ -242,29 +243,29 @@ class LayerwiseRelevancePropagation:
 
     w_p = K.maximum(w, 0.)
     b_p = K.maximum(b, 0.)
-    z_p = K.conv2d(a, kernel=w_p, strides=strides[1:-1], padding='same') + b_p + self.epsilon
+    z_p = K.conv2d(a, kernel=w_p, strides=strides[1:-1], padding='SAME') + b_p + self.epsilon
 
     #r=tf.reshape(r, [-1]) #dwight
     #z_p=tf.reshape(z_p, [-1]) #dwight
 
     s_p = r / z_p
 
-    c_p =tf.compat.v1.nn.conv2d_backprop_input(K.shape(a), w_p, s_p, strides, padding='SAME')
+    c_p =tf.compat.v1.nn.conv2d_backprop_input(K.shape(a), w_p, s_p, strides, padding=padding)
 
     w_n = K.minimum(w, 0.)
     b_n = K.minimum(b, 0.)
-    z_n = K.conv2d(a, kernel=w_n, strides=strides[1:-1], padding='same') + b_n - self.epsilon
+    z_n = K.conv2d(a, kernel=w_n, strides=strides[1:-1], padding=padding) + b_n - self.epsilon
     #z_n=tf.reshape(z_n, [-1]) #dwight
     s_n = r / z_n
-    c_n =tf.compat.v1.nn.conv2d_backprop_input(K.shape(a), w_n, s_n, strides, padding='SAME')
+    c_n =tf.compat.v1.nn.conv2d_backprop_input(K.shape(a), w_n, s_n, strides, padding=padding)
     
     #dwight modified the formula
     w_tmp = K.minimum(w, 1000000.)
     b_tmp = K.minimum(b, 1000000.)
-    z = K.conv2d(a, kernel=w_tmp, strides=strides[1:-1], padding='same') + b_tmp - self.epsilon
+    z = K.conv2d(a, kernel=w_tmp, strides=strides[1:-1], padding=padding) + b_tmp - self.epsilon
     s = r / z
     
-    c =tf.compat.v1.nn.conv2d_backprop_input(K.shape(a), w_tmp, tf.ones_like(z), strides, padding='SAME')
+    c =tf.compat.v1.nn.conv2d_backprop_input(K.shape(a), w_tmp, tf.ones_like(z), strides, padding=padding)
     
     if self.lrp_formula== 1:
         return a *  c , tf.tensordot((a*c),s,axes=0)
@@ -274,7 +275,7 @@ class LayerwiseRelevancePropagation:
         return a *  c , tf.tensordot(c,s/a2,axes=0)
     
     
-   # c = gen_nn_ops.max_pool_grad_v2(a, z, s, ksize, strides, padding='VALID')
+   # c = gen_nn_ops.max_pool_grad_v2(a, z, s, ksize, strides, padding=padding)
 
     #s_prime=tf.expand_dims(s, axis=1)
     #rw=tf.math.multiply( w_tmp, s_prime)
@@ -317,9 +318,10 @@ if __name__ == '__main__':
     
     
    # for mnist data
-    heatmaps = lrp.compute_heatmaps(x_test[0:1])
-    for img, hmap, label in zip(x_test[0:3], heatmaps, y_test[0:3]):
+    heatmaps = lrp.compute_heatmaps(x_test[0:5])
+    for img, hmap, label in zip(x_test[0:5], heatmaps, y_test[0:5]):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.axis('off')
         ax.imshow(hmap, cmap='Reds', interpolation='bilinear')
+
